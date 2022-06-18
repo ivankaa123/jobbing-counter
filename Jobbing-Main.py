@@ -14,10 +14,11 @@ from csv import writer
 
 now = datetime.now()
 
+MAX_THREADS = 30
 
 bot = commands.Bot(command_prefix='!')
 
-token = 'ODkzMzA4NTAyMjIxNjY4Mzcy.YVZkXw.Uk-Bq7Q-pl4dT6uWaZfu3d1sOu4'
+token = ''
 hdr = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'}
 ctx = ssl.create_default_context()
@@ -310,9 +311,11 @@ async def flags(ctx):
     with concurrent.futures.ThreadPoolExecutor(max_workers=24) as enemy_executor:
         enemy_executor.map(return_flag_enemy, enemy_names_list)
     await ctx.send("**Our Jobbers:" + str(sum(flag_counts.values())) + "**")
-    await ctx.send(flag_counts)
+    for key, value in sorted(flag_counts.items(), key=itemgetter(1), reverse=True):
+        await ctx.send(str(key) + ":" + str(value))
     await ctx.send("**Enemy Jobbers:" + str(sum(enemy_flag_counts.values())) + "**")
-    await ctx.send(enemy_flag_counts)
+    for key, value in sorted(enemy_flag_counts.items(), key=itemgetter(1), reverse=True):
+        await ctx.send(str(key) + ":" + str(value))
 
 
 @bot.command(name='bots')
