@@ -14,7 +14,6 @@ from csv import writer
 
 now = datetime.now()
 
-MAX_THREADS = 30
 
 bot = commands.Bot(command_prefix='!')
 
@@ -305,25 +304,15 @@ async def count_start(ctx):
 async def flags(ctx):
     global flag_counts
     global enemy_flag_counts
-    global our_jobber_list
-    global enemy_jobber_list
-    flag_counts = {}
-    enemy_flag_counts = {}
     get_pirates(id, enemy_id)
     with concurrent.futures.ThreadPoolExecutor(max_workers=24) as executor:
         executor.map(return_flag_us, names_list)
     with concurrent.futures.ThreadPoolExecutor(max_workers=24) as enemy_executor:
         enemy_executor.map(return_flag_enemy, enemy_names_list)
-    for i in sorted(flag_counts.items(), key=itemgetter(1), reverse=True):
-        our_jobber_list += i
-    for i in sorted(enemy_flag_counts.items(), key=itemgetter(1), reverse=True):
-        enemy_jobber_list += i
-    our_pretty_output = "\n".join(map(str, our_jobber_list))
-    enemy_pretty_output = "\n".join(map(str, enemy_jobber_list))
     await ctx.send("**Our Jobbers:" + str(sum(flag_counts.values())) + "**")
-    await ctx.send(our_pretty_output)
+    await ctx.send(flag_counts)
     await ctx.send("**Enemy Jobbers:" + str(sum(enemy_flag_counts.values())) + "**")
-    await ctx.send(enemy_pretty_output)
+    await ctx.send(enemy_flag_counts)
 
 
 @bot.command(name='bots')
