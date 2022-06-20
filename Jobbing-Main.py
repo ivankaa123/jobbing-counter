@@ -216,12 +216,21 @@ def bot_check(pirate_soup, flag):
 
 def return_flag_us(pirate):
     global our_bots
+    global cached
     try:
-        pirate_soup = parse('pirate', pirate)
-        try:
-            flag = pirate_soup.find('a', href=re.compile('^/yoweb/flag')).string
-        except:
-            flag = 'Independent'
+        if pirate not in cached:
+            pirate_soup = parse('pirate', pirate)
+            try:
+                flag = pirate_soup.find('a', href=re.compile('^/yoweb/flag')).string
+            except:
+                flag = 'Independent'
+            cached[pirate] = pirate_soup
+        else:
+            pirate_soup = cached[pirate]
+            try:
+                flag = pirate_soup.find('a', href=re.compile('^/yoweb/flag')).string
+            except:
+                flag = 'Independent'
         global flag_counts
         if flag in flag_counts:
             flag_counts[flag] += 1
@@ -237,12 +246,21 @@ def return_flag_us(pirate):
 
 def return_flag_enemy(pirate):
     global enemy_bots
+    global cached
     try:
-        enemy_pirate_soup = parse('pirate', pirate)
-        try:
-            flag = enemy_pirate_soup.find('a', href=re.compile('^/yoweb/flag')).string
-        except:
-            flag = 'Independent'
+        if pirate not in cached:
+            enemy_pirate_soup = parse('pirate', pirate)
+            try:
+                flag = enemy_pirate_soup.find('a', href=re.compile('^/yoweb/flag')).string
+            except:
+                flag = 'Independent'
+            cached[pirate] = enemy_pirate_soup
+        else:
+            enemy_pirate_soup = cached[pirate]
+            try:
+                flag = enemy_pirate_soup.find('a', href=re.compile('^/yoweb/flag')).string
+            except:
+                flag = 'Independent'
         global enemy_flag_counts
 
         if flag in enemy_flag_counts:
@@ -312,13 +330,16 @@ async def flags(ctx):
     enemy_names_list = get_jobber_names(enemy_id)
     jobber_list = []
     enemy_jobber_list = []
+    flag_counts = {}
+    enemy_flag_counts = {}
+    print (datetime.now())
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as executor:
             executor.map(return_flag_us, names_list)
     except TypeError:
         pass
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as enemy_executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as enemy_executor:
             enemy_executor.map(return_flag_enemy, enemy_names_list)
     except TypeError:
         pass
@@ -330,7 +351,7 @@ async def flags(ctx):
     await ctx.send('\n'.join(jobber_list))
     await ctx.send("**Enemy Jobbers: " + str(sum(enemy_flag_counts.values())) + "**")
     await ctx.send('\n'.join(enemy_jobber_list))
-
+    print(datetime.now())
 
 @bot.command(name='bots')
 async def bots(ctx):
