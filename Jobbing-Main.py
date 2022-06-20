@@ -1,10 +1,8 @@
 from discord.ext import commands
 from discord.ext import tasks
-import time
 import ssl
 import requests
 from bs4 import BeautifulSoup as bs
-import re
 import urllib.request
 from operator import itemgetter
 import concurrent.futures
