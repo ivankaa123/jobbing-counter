@@ -10,11 +10,9 @@ from operator import itemgetter
 import concurrent.futures
 import asyncio
 from datetime import datetime
-from csv import writer
+import os
 
 now = datetime.now()
-
-MAX_THREADS = 30
 
 bot = commands.Bot(command_prefix='!')
 
@@ -105,8 +103,7 @@ def find_change(old, new):
 def scrape(crewname):
     global old_jobbers
     global old_enemy_jobbers
-    global crew
-    global enemy_crew
+    global crew_name
     soup = parse('crew', crewname, True)
     crew_name = soup.find("b").get_text()
     try:
@@ -170,8 +167,7 @@ def get_jobber_names(id):
         pass
 
 
-def bot_check(pirate):
-    pirate_soup = parse('pirate', pirate)
+def bot_check(pirate_soup, flag):
     data = pirate_soup.get_text()
     data = data.split('Piracy Skills')[1]
     data = data.split('Carousing Skills')[0]
@@ -219,6 +215,7 @@ def bot_check(pirate):
 
 
 def return_flag_us(pirate):
+    global our_bots
     try:
         pirate_soup = parse('pirate', pirate)
         try:
@@ -230,15 +227,16 @@ def return_flag_us(pirate):
             flag_counts[flag] += 1
         if flag not in flag_counts:
             flag_counts[flag] = 1
-        global our_bots
-        is_bot = bot_check(pirate)
+
+        is_bot = bot_check(pirate_soup, flag)
         if is_bot > 50:
-            our_bots.append(pirate)
+            our_bots.append(pirate.string)
     except AttributeError:  # catches the error if we try get the flags for a crew with not jobbers
         pass
 
 
 def return_flag_enemy(pirate):
+    global enemy_bots
     try:
         enemy_pirate_soup = parse('pirate', pirate)
         try:
@@ -246,12 +244,13 @@ def return_flag_enemy(pirate):
         except:
             flag = 'Independent'
         global enemy_flag_counts
+
         if flag in enemy_flag_counts:
             enemy_flag_counts[flag] += 1
         if flag not in enemy_flag_counts:
             enemy_flag_counts[flag] = 1
-        global enemy_bots
-        is_bot = bot_check(pirate)
+
+        is_bot = bot_check(enemy_pirate_soup, flag)
         if is_bot > 50:
             enemy_bots.append(pirate.string)
     except AttributeError:  # catches exception if threading tries to get the flag of an empty list
@@ -284,9 +283,13 @@ async def setid(ctx, arg1, arg2: int):
     global enemy_id
     if arg1 == 'us':
         id = arg2
+        us = scrape(id)
+        await ctx.send(f'Our crew: {us[0]}')
         return id
     if arg1 == 'enemy':
         enemy_id = arg2
+        them = scrape(enemy_id)
+        await ctx.send(f'Enemy crew: {them[0]}')
         return enemy_id
 
 
@@ -307,22 +310,26 @@ async def flags(ctx):
     global enemy_flag_counts
     names_list = get_jobber_names(id)
     enemy_names_list = get_jobber_names(enemy_id)
+    jobber_list = []
+    enemy_jobber_list = []
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=24) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
             executor.map(return_flag_us, names_list)
     except TypeError:
         pass
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=24) as enemy_executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as enemy_executor:
             enemy_executor.map(return_flag_enemy, enemy_names_list)
     except TypeError:
         pass
-    await ctx.send("**Our Jobbers: " + str(sum(flag_counts.values())) + "**")
     for key, value in sorted(flag_counts.items(), key=itemgetter(1), reverse=True):
-        await ctx.send(str(key) + ": " + str(value))
-    await ctx.send("**Enemy Jobbers: " + str(sum(enemy_flag_counts.values())) + "**")
+        jobber_list.append(str(key) + ": " + str(value))
     for key, value in sorted(enemy_flag_counts.items(), key=itemgetter(1), reverse=True):
-        await ctx.send(str(key) + ": " + str(value))
+        enemy_jobber_list.append(str(key) + ": " + str(value))
+    await ctx.send("**Our Jobbers: " + str(sum(flag_counts.values())) + "**")
+    await ctx.send('\n'.join(jobber_list))
+    await ctx.send("**Enemy Jobbers: " + str(sum(enemy_flag_counts.values())) + "**")
+    await ctx.send('\n'.join(enemy_jobber_list))
 
 
 @bot.command(name='bots')
@@ -331,13 +338,15 @@ async def bots(ctx):
     global enemy_bots
     if len(our_bots) != 0:  # Formatting for if there are no likely bots in either crew.
         our_bots = ', '.join(our_bots)
-        await ctx.send(f"{crew} likely bots:")
+        us = scrape(id)
+        await ctx.send(f"{us[0]} likely bots:")
         await ctx.send(our_bots)
     else:
         await ctx.send('No bots in friendly crew.')
     if len(enemy_bots) != 0:
         enemy_bots = ', '.join(enemy_bots)
-        await ctx.send(f"{enemy_crew} likely bots:")
+        them = scrape(enemy_id)
+        await ctx.send(f"{them[0]} likely bots:")
         await ctx.send(enemy_bots)
     else:
         await ctx.send('No bots in enemy crew.')
