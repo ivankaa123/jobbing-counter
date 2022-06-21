@@ -1,6 +1,7 @@
 from discord.ext import commands
 from discord.ext import tasks
 import ssl
+import re
 import requests
 from bs4 import BeautifulSoup as bs
 import urllib.request
@@ -223,6 +224,9 @@ def return_flag_us(pirate):
             except:
                 flag = 'Independent'
             cached[pirate] = pirate_soup
+            is_bot = bot_check(pirate_soup, flag)
+            if is_bot > 50:
+                our_bots.append(pirate.string)
         else:
             pirate_soup = cached[pirate]
             try:
@@ -235,9 +239,7 @@ def return_flag_us(pirate):
         if flag not in flag_counts:
             flag_counts[flag] = 1
 
-        is_bot = bot_check(pirate_soup, flag)
-        if is_bot > 50:
-            our_bots.append(pirate.string)
+
     except AttributeError:  # catches the error if we try get the flags for a crew with not jobbers
         pass
 
@@ -253,6 +255,9 @@ def return_flag_enemy(pirate):
             except:
                 flag = 'Independent'
             cached[pirate] = enemy_pirate_soup
+            is_bot = bot_check(enemy_pirate_soup, flag)
+            if is_bot > 50:
+                enemy_bots.append(pirate.string)
         else:
             enemy_pirate_soup = cached[pirate]
             try:
@@ -266,9 +271,6 @@ def return_flag_enemy(pirate):
         if flag not in enemy_flag_counts:
             enemy_flag_counts[flag] = 1
 
-        is_bot = bot_check(enemy_pirate_soup, flag)
-        if is_bot > 50:
-            enemy_bots.append(pirate.string)
     except AttributeError:  # catches exception if threading tries to get the flag of an empty list
         pass
 
@@ -356,19 +358,25 @@ async def bots(ctx):
     global our_bots
     global enemy_bots
     if len(our_bots) != 0:  # Formatting for if there are no likely bots in either crew.
-        our_bots = ', '.join(our_bots)
+        our_bots_clean = ', '.join(our_bots)
         us = scrape(id)
         await ctx.send(f"{us[0]} likely bots:")
-        await ctx.send(our_bots)
+        await ctx.send(our_bots_clean)
     else:
         await ctx.send('No bots in friendly crew.')
     if len(enemy_bots) != 0:
-        enemy_bots = ', '.join(enemy_bots)
+        enemy_bots_clean = ', '.join(enemy_bots)
         them = scrape(enemy_id)
         await ctx.send(f"{them[0]} likely bots:")
-        await ctx.send(enemy_bots)
+        await ctx.send(enemy_bots_clean)
     else:
         await ctx.send('No bots in enemy crew.')
 
-
+@bot.command(name='complain')
+async def bots(ctx):
+    global enemy_bots
+    complaint_list = []
+    for bot in enumerate(enemy_bots):
+        complaint_list.append('/complain ' + bot[1] + ' botting')
+    await ctx.send('\n'.join(complaint_list))
 bot.run(token)
