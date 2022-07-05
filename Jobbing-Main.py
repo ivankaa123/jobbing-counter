@@ -198,6 +198,8 @@ def return_flag_us(pirate):
             cached[pirate] = flag
             is_bot = bot_check(pirate_soup, flag)
             if is_bot > 50:
+                if pirate in enemy_bots:
+                    enemy_bots.remove(pirate)
                 our_bots.append(pirate.string)
         else:
             flag = cached[pirate]
@@ -225,6 +227,8 @@ def return_flag_enemy(pirate):
             cached[pirate] = flag
             is_bot = bot_check(enemy_pirate_soup, flag)
             if is_bot > 50:
+                if pirate in our_bots:
+                    our_bots.remove(pirate)
                 enemy_bots.append(pirate.string)
         else:
             flag = cached[pirate]
