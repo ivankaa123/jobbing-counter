@@ -260,7 +260,7 @@ async def count(ctx):
         await ctx.send(f"*Outjobbing by {diff}*")
     elif int(them[1]) > int(us[1]):
         diff = int(them[1]) - int(us[1])
-        await ctx.send(f"Being outjobbed by {diff}*")
+        await ctx.send(f"*Being outjobbed by {diff}*")
     else:
         await ctx.send("*Jobbing even*")
     await ctx.send("------")
