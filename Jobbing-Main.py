@@ -257,13 +257,12 @@ async def count(ctx):
         await ctx.send(f"{them[0]} has {them[1]} jobbers.")
     if int(us[1]) > int(them[1]):
         diff = int(us[1]) - int(them[1])
-        await ctx.send(f"*Outjobbing by {diff}*")
+        await ctx.send(f"*Outjobbing by {diff}*\n------")
     elif int(them[1]) > int(us[1]):
         diff = int(them[1]) - int(us[1])
-        await ctx.send(f"*Being outjobbed by {diff}*")
+        await ctx.send(f"*Being outjobbed by {diff}*\n------")
     else:
-        await ctx.send("*Jobbing even*")
-    await ctx.send("------")
+        await ctx.send("*Jobbing even* \n------")
     await asyncio.sleep(60)
 
 
