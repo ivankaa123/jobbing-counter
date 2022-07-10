@@ -247,7 +247,6 @@ def return_flag_enemy(pirate):
 async def count(ctx):
     us = scrape(id)  # Will return a tuple of 3 values, crew_name, jobber count and change.
     them = scrape(enemy_id)
-    await ctx.send("------")
     if us[2] != 0:
         await ctx.send(f"{us[0]} has {us[1]} jobbers.  ({us[2]}).")
     else:
@@ -256,6 +255,14 @@ async def count(ctx):
         await ctx.send(f"{them[0]} has {them[1]} jobbers.  ({them[2]}).")
     else:
         await ctx.send(f"{them[0]} has {them[1]} jobbers.")
+    if int(us[1]) > int(them[1]):
+        diff = int(us[1]) - int(them[1])
+        await ctx.send(f"*Outjobbing by {diff}*")
+    elif int(them[1]) > int(us[1]):
+        diff = int(them[1]) - int(us[1])
+        await ctx.send(f"Being outjobbed by {diff}*")
+    else:
+        await ctx.send("*Jobbing even*")
     await ctx.send("------")
     await asyncio.sleep(60)
 
